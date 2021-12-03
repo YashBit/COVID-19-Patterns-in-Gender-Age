@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://d3js.org/d3-path.v2.min.js"></script>
+    <script src="https://d3js.org/d3-shape.v2.min.js"></script>
+    <script src="https://d3js.org/topojson.v1.min.js"></script>
+    <script src="https://d3js.org/d3-array.v2.min.js"></script>
+    <script src="https://d3js.org/d3-geo.v2.min.js"></script>
+    <script src="https://d3js.org/d3-geo-projection.v3.min.js"></script>
+    <script src="https://unpkg.com/react/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone/babel.js"></script>
+    <link rel="stylesheet" href="styles.css">  
+    <div id="tooltip"></div><!-- div to hold tooltip. -->
+    <svg width="960" height="600" id="statesvg"></svg> <!-- svg to hold the map. -->
+    <script src="indiaState.js"></script> <!-- creates india State. -->
+    <!-- <script src="http://d3js.org/d3.v3.min.js"></script> -->
+</head>
+
+<!-- <script src = "jquery.js"></script>
+<script>
+    $(function(){
+        $("#includedContent").load("india.html");
+    });
+</script> -->
+
+
+<style>
+	.state{
+		fill: none;
+		stroke: #a9a9a9;
+		stroke-width: 1;
+	}
+	.state:hover{
+		fill-opacity:0.5;
+	}
+	#tooltip {   
+		position: absolute;           
+		text-align: center;
+		padding: 20px;             
+		margin: 10px;
+		font: 12px sans-serif;        
+		background: lightsteelblue;   
+		border: 1px;      
+		border-radius: 2px;           
+		pointer-events: none;         
+	}
+	#tooltip h4{
+		margin:0;
+		font-size:14px;
+	}
+	#tooltip{
+		background:rgba(0,0,0,0.9);
+		border:1px solid grey;
+		border-radius:5px;
+		font-size:12px;
+		width:auto;
+		padding:4px;
+		color:white;
+		opacity:0;
+	}
+	#tooltip table{
+		table-layout:fixed;
+	}
+	#tooltip tr td{
+		padding:0;
+		margin:0;
+	}
+	#tooltip tr td:nth-child(1){
+		width:50px;
+	}
+	#tooltip tr td:nth-child(2){
+		text-align:center;
+	}
+</style>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        
+    const completeUrl = "data/complete.csv";
+    const csvUrl = 'https://gist.githubusercontent.com/hogwild/3b9aa737bde61dcb4dfa60cde8046e04/raw/citibike2020.csv';
+    const mapUrl = "states.json";
+    
+    function useCompleteData(csvPath){
+        const [dataAll, setData] = React.useState(null);
+        React.useEffect(() => {   
+            d3.csv(csvPath).then(data => {
+                data.forEach(d => {
+                    d.death = +d.death;//derive a new attribute: popularity
+                    d.cured = +d.cured;
+                    d.New_cases = +d.New_cases;
+                    d.Latitude = +d.Latitude;
+                    d.Longitude = +d.Longitude;
+                });
+                setData(data);
+            });
+        }, []);
+        return dataAll;
+    }
+   
+    function useMap(jsonPath) {
+        const [data, setData] = React.useState(null);
+        React.useEffect(() => {
+            d3.json(jsonPath).then(geoJsonData => {
+                setData(geoJsonData);
+            })
+        }, []);
+        return data;
+    }
+    function SymbolMap(props) {
+        const {x, y, map, data, height, width} = props;
+        const projection = d3.geoMercator()
+            .scale(50)
+            .fitSize([width, height], map);
+
+
+        const path = d3.geoPath(projection);
+        const radius = d3.scaleLinear().range([2, 11])
+            .domain([d3.min(data, d=>d.cured), d3.max(data, d=>d.cured)]);
+        
+       
+
+        //console.log(data, 62);
+
+        // Size of the station == popularity
+
+        
+        //console.log(map, 53);
+        // 1. min 2, max 20
+        // 2. On hover turn blue
+
+        console.log(data, 138);
+        return <g transform={`translate(${x}, ${y})`}>
+            <path  d={path()} />
+            {map.features.map(feature => {
+                //console.log(feature.properties.name, 72);       
+                // get the color of circles in red
+                
+                //console.log(stations, 79);         
+                return <path key={feature.properties.name + "boundary"} className={"boundary"}
+                    d={path(feature)}/>                    
+                })}
+                
+                {data.map(d => {
+                            //console.log(xScale(d.tripdurationS, 95));
+                    const [x, y] = projection([d.Longitude, d.Latitude]);
+                    return <circle key = {d.Longitude + d.Latitude}
+                    cx={x} cy={y} r={radius(d.cured)} fill = {"black"} stroke = {`black`} opacity={0.7}  /> 
+                
+
+
+                })}
+                    
+            </g>
+    }
+    
+    const IndiaCompleteData = () => {
+        const [month, setMonth] = React.useState('4');
+        const [selectedStation, setSelectedStation] = React.useState(null);
+        const completeData = useCompleteData(completeUrl);
+        console.log(completeData, 408);
+        // console.log(dataAll, 410);
+        const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const map = useMap(mapUrl);
+        if (!map || !completeData) {
+                return <pre>Loading...</pre>;
+            };
+        
+        const WIDTH = 1200;
+        const HEIGHT = 800;
+        const margin = { top: 20, right: 40, bottom: 160, left: 40, gap:40 };
+        const innerWidth = WIDTH - margin.left - margin.right - margin.gap;
+        const innerHeight = HEIGHT - margin.top - margin.bottom - margin.gap;
+        // const data = completeData.filter( d => {
+        //    // return d.month === MONTH[month];
+        // });
+        // Note: stationYearData is the data of the year of a seleted station. 
+        const stationYearData = completeData.filter( d=> {
+            //return d.station == selectedStation;
+        }); 
+        // const changeHandler = (event) => {
+        //             setMonth(event.target.value);
+        //         }
+        // const selectedPoint = dataAll.filter(d => d.station===selectedStation)[0];
+        // console.log(stationYearData.map( d => d.popularity));  
+        return <div>
+            <svg width={WIDTH} height={HEIGHT}>
+                    <g>                      
+                        <SymbolMap x={margin.left} y={margin.top} height={innerHeight+margin.gap} 
+                        width={innerWidth/2} data={completeData} map={map} />
+                    </g>
+            </svg>
+            <div style={{position: "absolute", textAlign: "left", width: "240px",left:"40px", top:"40px"}}>
+                <h3>India Map 2</h3>
+                <p>National Map to see the cured, dead and the confirmed cases</p>
+            </div>
+            
+        </div>
+    }
+    ReactDOM.render( <IndiaCompleteData />, document.getElementById('root'));
+    </script>
+    </body>
+    </html>
