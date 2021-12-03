@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CitiBike Stations</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://d3js.org/d3-path.v2.min.js"></script>
     <script src="https://d3js.org/d3-shape.v2.min.js"></script>
@@ -12,35 +16,82 @@
     <script src="https://unpkg.com/react/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/babel-standalone/babel.js"></script>
-    <link rel="stylesheet" href="styles.css" > 
+    <link rel="stylesheet" href="styles.css">  
+    <div id="tooltip"></div><!-- div to hold tooltip. -->
+    <svg width="960" height="600" id="statesvg"></svg> <!-- svg to hold the map. -->
+    <script src="indiaState.js"></script> <!-- creates india State. -->
+    <!-- <script src="http://d3js.org/d3.v3.min.js"></script> -->
 </head>
+
+<!-- <script src = "jquery.js"></script>
+<script>
+    $(function(){
+        $("#includedContent").load("india.html");
+    });
+</script> -->
+
+
+<style>
+	.state{
+		fill: none;
+		stroke: #a9a9a9;
+		stroke-width: 1;
+	}
+	.state:hover{
+		fill-opacity:0.5;
+	}
+	#tooltip {   
+		position: absolute;           
+		text-align: center;
+		padding: 20px;             
+		margin: 10px;
+		font: 12px sans-serif;        
+		background: lightsteelblue;   
+		border: 1px;      
+		border-radius: 2px;           
+		pointer-events: none;         
+	}
+	#tooltip h4{
+		margin:0;
+		font-size:14px;
+	}
+	#tooltip{
+		background:rgba(0,0,0,0.9);
+		border:1px solid grey;
+		border-radius:5px;
+		font-size:12px;
+		width:auto;
+		padding:4px;
+		color:white;
+		opacity:0;
+	}
+	#tooltip table{
+		table-layout:fixed;
+	}
+	#tooltip tr td{
+		padding:0;
+		margin:0;
+	}
+	#tooltip tr td:nth-child(1){
+		width:50px;
+	}
+	#tooltip tr td:nth-child(2){
+		text-align:center;
+	}
+</style>
 <body>
     <div id="root"></div>
     <script type="text/babel">
+        
     const completeUrl = "data/complete.csv";
     const csvUrl = 'https://gist.githubusercontent.com/hogwild/3b9aa737bde61dcb4dfa60cde8046e04/raw/citibike2020.csv';
     const mapUrl = "https://gist.githubusercontent.com/hogwild/6784f0d85e8837b9926c184c65ca8ed0/raw/2040d6883cf822817e34b5bda885348ec6214572/jerseyCity_geojson.json";
-    function useData(csvPath){
-        const [dataAll, setData] = React.useState(null);
-        React.useEffect(() => {
-            d3.csv(csvPath).then(data => {
-                data.forEach(d => {
-                    d.start = +d.start;
-                    d.tripdurationS = +d.tripdurationS;
-                    d.end = +d.end;
-                    d.tripdurationE = +d.tripdurationE;
-                    d.latitude = +d.latitude;
-                    d.longitude = +d.longitude;
-                    d.popularity = d.start + d.end; //derive a new attribute: popularity
-                });
-                setData(data);
-            });
-        }, []);
-        return dataAll;
-    }
+    
     function useCompleteData(csvPath){
         const [dataAll, setData] = React.useState(null);
         React.useEffect(() => {
+           
+            
             d3.csv(csvPath).then(data => {
                 data.forEach(d => {
                     d.death = +d.death;//derive a new attribute: popularity
@@ -52,7 +103,17 @@
         }, []);
         return dataAll;
     }
-
+    function tooltipHtml(n, d){	/* function to create html content string in tooltip div. */
+		// console.log(n, 113);
+        return "<h4>"+n+"</h4><table>"+
+			"<tr><td>Low</td><td>"+(d.low)+"</td></tr>"+
+			"<tr><td>Average</td><td>"+(d.avg)+"</td></tr>"+
+			"<tr><td>High</td><td>"+(d.high)+"</td></tr>"+
+			"<tr><td>Chicken</td><td>"+(d.high)+"</td></tr>"
+			"</table>";
+	}
+    
+    
     const IndiaCompleteData = () => {
         const [month, setMonth] = React.useState('4');
         const [selectedStation, setSelectedStation] = React.useState(null);
@@ -79,6 +140,20 @@
         // const selectedPoint = dataAll.filter(d => d.station===selectedStation)[0];
         // console.log(stationYearData.map( d => d.popularity));
         
+        var sampleData ={};
+        ["AP", "AR", "AS", "BR", "CT", "DL", "GA", "GJ","HR", "HP", "JK", "JH", "KA", "KL", "MP", "MH",
+                                        "MN", "ML", "MZ", "NL", "OR", "PB", "RJ", "SK","TN", "TR", "UP", "UT", "WB"]
+            .forEach(function(d){ 
+            
+                var low=Math.round(100*Math.random()), 
+                    mid=Math.round(100*Math.random()), 
+                    high=Math.round(100*Math.random());
+                sampleData[d]={low:d3.min([low,mid,high]), high:d3.max([low,mid,high]), 
+                        avg:Math.round((low+mid+high)/3), color:d3.interpolate("#ffffcc", "#800026")(low/100)}; 
+            });
+        iStates.draw("#statesvg", sampleData, tooltipHtml);
+        
+        d3.select(self.frameElement).style("height", "800px"); 
         return <div>
             
             <div style={{position: "absolute", textAlign: "left", width: "240px",left:"40px", top:"40px"}}>
