@@ -83,7 +83,7 @@
     <div id="root"></div>
     <script type="text/babel">
         
-    const completeUrl = "data/complete.csv";
+    const completeUrl = "data/completeFiltered.csv";
     const csvUrl = 'https://gist.githubusercontent.com/hogwild/3b9aa737bde61dcb4dfa60cde8046e04/raw/citibike2020.csv';
     const mapUrl = "states.json";
     
@@ -93,10 +93,11 @@
             d3.csv(csvPath).then(data => {
                 data.forEach(d => {
                     d.death = +d.death;//derive a new attribute: popularity
-                    d.cured = +d.cured;
+                    d.Cured = +d.Cured;
                     d.New_cases = +d.New_cases;
                     d.Latitude = +d.Latitude;
                     d.Longitude = +d.Longitude;
+                    d.Total_Confirmed_cases = +d.Total_Confirmed_cases;
                 });
                 setData(data);
             });
@@ -114,15 +115,20 @@
         return data;
     }
     function SymbolMap(props) {
-        const {x, y, map, data, height, width} = props;
+        const {x, y, map, data, height, width, forecast} = props;
         const projection = d3.geoMercator()
             .scale(50)
             .fitSize([width, height], map);
-
+        console.log(forecast, 121);
 
         const path = d3.geoPath(projection);
+        
         const radius = d3.scaleLinear().range([2, 11])
-            .domain([d3.min(data, d=>d.cured), d3.max(data, d=>d.cured)]);
+            .domain([d3.min(data, d=>d.Cured), d3.max(data, d=>d.Cured)]);
+        const radius2 = d3.scaleLinear().range([0.04, 0.3])
+            .domain([d3.min(data, d=>d.Death), d3.max(data, d=>d.Death)]);
+        const radius3 = d3.scaleLinear().range([2, 11])
+            .domain([d3.min(data, d=>d.Total_Confirmed_cases), d3.max(data, d=>d.Total_Confirmed_cases)]);
         
        
 
@@ -136,33 +142,92 @@
         // 2. On hover turn blue
 
         console.log(data, 138);
-        return <g transform={`translate(${x}, ${y})`}>
-            <path  d={path()} />
-            {map.features.map(feature => {
-                //console.log(feature.properties.name, 72);       
-                // get the color of circles in red
-                
-                //console.log(stations, 79);         
-                return <path key={feature.properties.name + "boundary"} className={"boundary"}
-                    d={path(feature)}/>                    
-                })}
-                
-                {data.map(d => {
-                            //console.log(xScale(d.tripdurationS, 95));
-                    const [x, y] = projection([d.Longitude, d.Latitude]);
-                    return <circle key = {d.Longitude + d.Latitude}
-                    cx={x} cy={y} r={radius(d.cured)} fill = {"black"} stroke = {`black`} opacity={0.7}  /> 
-                
-
-
-                })}
+        if(forecast === null || forecast === "CURED"){
+            return <g transform={`translate(${x}, ${y})`}>
+                <path  d={path()} />
+                {map.features.map(feature => {
+                    //console.log(feature.properties.name, 72);       
+                    // get the color of circles in red
                     
-            </g>
+                    //console.log(stations, 79);         
+                    return <path key={feature.properties.name + "boundary"} className={"boundary"}
+                        d={path(feature)}/>                    
+                    })}
+                    
+                    
+                    {data.map(d => {
+                                //console.log(xScale(d.tripdurationS, 95));
+                        const [x, y] = projection([d.Longitude, d.Latitude]);
+                        return <circle key = {d.Longitude + d.Latitude}
+                        cx={x} cy={y} r={radius(d.Cured)} fill = {"green"} stroke = {`black`} opacity={0.7}  /> 
+                    
+
+
+                    })}
+                        
+                </g>
+            }
+        else if(forecast === "DEAD"){
+            return <g transform={`translate(${x}, ${y})`}>
+                <path  d={path()} />
+                {map.features.map(feature => {
+                    //console.log(feature.properties.name, 72);       
+                    // get the color of circles in red
+                    
+                    //console.log(stations, 79);         
+                    return <path key={feature.properties.name + "boundary"} className={"boundary"}
+                        d={path(feature)}/>                    
+                    })}
+                    
+                    
+                    {data.map(d => {
+                                //console.log(xScale(d.tripdurationS, 95));
+                        const [x, y] = projection([d.Longitude, d.Latitude]);
+                        return <circle key = {d.Longitude + d.Latitude}
+                        cx={x} cy={y} r={radius2(d.Death)} fill = {"black"} stroke = {`black`} opacity={0.7}  /> 
+                    
+
+
+                    })}
+                        
+                </g>
+            }
+        else if(forecast === "CONFIRMED"){
+            return <g transform={`translate(${x}, ${y})`}>
+                <path  d={path()} />
+                {map.features.map(feature => {
+                    //console.log(feature.properties.name, 72);       
+                    // get the color of circles in red
+                    
+                    //console.log(stations, 79);         
+                    return <path key={feature.properties.name + "boundary"} className={"boundary"}
+                        d={path(feature)}/>                    
+                    })}
+                    
+                    
+                    {data.map(d => {
+                                //console.log(xScale(d.tripdurationS, 95));
+                        const [x, y] = projection([d.Longitude, d.Latitude]);
+                        return <circle key = {d.Longitude + d.Latitude}
+                        cx={x} cy={y} r={radius3(d.Total_Confirmed_cases)} fill = {"red"} stroke = {`black`} opacity={0.7}  /> 
+                    
+
+
+                    })}
+                        
+                </g>
+        }
+      
+
     }
     
     const IndiaCompleteData = () => {
         const [month, setMonth] = React.useState('4');
         const [selectedStation, setSelectedStation] = React.useState(null);
+
+        const [forecast, setForecast] = React.useState(null);
+
+
         const completeData = useCompleteData(completeUrl);
         console.log(completeData, 408);
         // console.log(dataAll, 410);
@@ -184,16 +249,34 @@
         const stationYearData = completeData.filter( d=> {
             //return d.station == selectedStation;
         }); 
-        // const changeHandler = (event) => {
-        //             setMonth(event.target.value);
-        //         }
+        const changeHandler = (event) => {
+            setForecast(event.target.value);
+        }
+        console.log(forecast, 194);
         // const selectedPoint = dataAll.filter(d => d.station===selectedStation)[0];
         // console.log(stationYearData.map( d => d.popularity));  
         return <div>
+          
+            <div>
+                <form action="/action_page.php"> 
+                    <input  type='radio'  name="fav_language" value= "DEAD" id="html" 
+                        onChange={() => changeHandler(event)}/>
+                    <label for="DEAD">DEAD</label>
+                    <br></br>
+                    <input  type='radio' name="fav_language"  value= "CURED"  id="CURED"
+                        onChange={() => changeHandler(event)}/>
+                    <label for="CURED">CURED</label>
+                    <br></br>
+                    <input  type='radio' name="fav_language" value= "CONFIRMED"  id="CONFIRMED"
+                        onChange={() => changeHandler(event)}/>
+                    <label for="CONFIRMED">CONFIRMED</label>
+                    <br></br>
+                </form>
+            </div>
             <svg width={WIDTH} height={HEIGHT}>
                     <g>                      
                         <SymbolMap x={margin.left} y={margin.top} height={innerHeight+margin.gap} 
-                        width={innerWidth/2} data={completeData} map={map} />
+                        width={innerWidth/2} data={completeData} map={map} forecast = {forecast}/>
                     </g>
             </svg>
             <div style={{position: "absolute", textAlign: "left", width: "240px",left:"40px", top:"40px"}}>
