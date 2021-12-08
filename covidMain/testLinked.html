@@ -165,6 +165,9 @@
                     d3.csv(csvPath).then(data => {
                         data.forEach(d => {
                             d.Death = +d.Death;
+                            d.Cured = +d.Cured;
+                            d.New_cases = +d.New_cases;
+                            d.Total_Confirmed_cases = +d.Total_Confirmed_cases;
                         });
                         setData(data);
                     });
@@ -222,28 +225,117 @@
         }
       
         function Bars(props) {
-            const { data, xScale, yScale, height, selectedStation, setSelectedStation } = props;
-            const getColor = (selectedStation, Name) => {
-                return selectedStation && Name === selectedStation ? "red" : "black";
+            const {forecast, data, xScale, yScale, height, selectedStation, setSelectedStation } = props;            console.log(forecast, 229);
+            let colorId = "green";
+            if(forecast === null){
+                colorId="black";
+                
             }
-            return <g>
-                {data.map(d =>
-                    <rect key={d.Name} x={xScale(d.Name)} y={yScale(d.Death)}
-                        width={xScale.bandwidth()} height={height - yScale(d.Death)} stroke="white"
-                        fill={getColor(selectedStation, d.Name)} onMouseEnter={() => setSelectedStation(d.Name)}
-                        onMouseOut={() => setSelectedStation(null)} />
-                )}
-            </g>
+            else if(forecast === "Cured Rates"){
+               colorId="green";
+            }
+            else if (forecast === "Confirmed Rates") {
+                colorId = "red";
+            }
+            else if (forecast === "Death Rates") {
+                 colorId = "black";
+            }
+            else{
+                   colorId = "black";
+                
+            }
+             const getColor = (selectedStation, Name) => {
+                    return selectedStation && Name === selectedStation ? "red" : colorId;
+             }
+            let deathData = data;
+            // const xScaleBar = d3.scaleBand()
+            //     .domain(deathData.map(d => d.Name))
+            //     .range([innerWidth, 0]);
+            // const yScaleBar = d3.scaleLinear()
+            //     .domain([0, d3.max(deathData, d => d.Death)])
+            //     .range([innerHeight / 2, 0])
+            //     .nice();
+            if (forecast === null) {
+                   return <g>
+                    {data.map(d =>
+                        <rect key={d.Name} x={xScale(d.Name)} y={yScale(d.Death)}
+                            width={xScale.bandwidth()} height={height - yScale(d.Death)} stroke="white"
+                            fill={getColor(selectedStation, d.Name)} onMouseEnter={() => setSelectedStation(d.Name)}
+                            onMouseOut={() => setSelectedStation(null)} />
+                    )}
+                </g>
+            }
+            else if (forecast === "Death Rates") {
+                   return <g>
+                    {data.map(d =>
+                        <rect key={d.Name} x={xScale(d.Name)} y={yScale(d.Death)}
+                            width={xScale.bandwidth()} height={height - yScale(d.Death)} stroke="white"
+                            fill={getColor(selectedStation, d.Name)} onMouseEnter={() => setSelectedStation(d.Name)}
+                            onMouseOut={() => setSelectedStation(null)} />
+                    )}
+                </g>
+            }
+            else if (forecast === "Cured Rates") {
+                return <g>
+                    {data.map(d =>
+                        <rect key={d.Name} x={xScale(d.Name)} y={yScale(d.Cured)}
+                            width={xScale.bandwidth()} height={height - yScale(d.Cured)} stroke="black"
+                            fill={getColor(selectedStation, d.Name)} onMouseEnter={() => setSelectedStation(d.Name)}
+                            onMouseOut={() => setSelectedStation(null)} />
+                    )}
+                </g>
+            }
+             else if (forecast === "Confirmed Rates") {
+                return <g>
+                    {data.map(d =>
+                        <rect key={d.Name} x={xScale(d.Name)} y={yScale(d.Total_Confirmed_cases)}
+                            width={xScale.bandwidth()} height={height - yScale(d.Total_Confirmed_cases)} stroke="black"
+                            fill={getColor(selectedStation, d.Name)} onMouseEnter={() => setSelectedStation(d.Name)}
+                            onMouseOut={() => setSelectedStation(null)} />
+                    )}
+                </g>
+            }
+          
+            
+          
+           
         }
         function BarChart(props) {
-            const { offsetX, offsetY, data, xScale, yScale, height, width, selectedStation, setSelectedStation } = props;
-            return <g transform={`translate(${offsetX}, ${offsetY})`}>
-                <Bars data={data} xScale={xScale} yScale={yScale} height={height}
-                    selectedStation={selectedStation} setSelectedStation={setSelectedStation} />
-                <YAxis yScale={yScale} height={height} axisLable={"Death Rates"} />
-                <XAxis xScale={xScale} height={height} width={width} />
-            </g>
-        }
+                const {forecast,  offsetX, offsetY, data, xScale, yScale, xScale2, yScale2, xScale3, yScale3, height, width, selectedStation, setSelectedStation } = props;
+                if(forecast === null){
+                        return <g transform={`translate(${offsetX}, ${offsetY})`}>
+                        <Bars forecast={forecast} data={data} xScale={xScale} yScale={yScale} height={height}
+                            selectedStation={selectedStation} setSelectedStation={setSelectedStation} />
+                        <YAxis yScale={yScale} height={height} axisLable={"Death Rates"} />
+                        <XAxis xScale={xScale} height={height} width={width} />
+                    </g>
+                }
+                  else if (forecast === "Death Rates") {
+                    return <g transform={`translate(${offsetX}, ${offsetY})`}>
+                        <Bars forecast={forecast} data={data} xScale={xScale} yScale={yScale} height={height}
+                            selectedStation={selectedStation} setSelectedStation={setSelectedStation} />
+                        <YAxis yScale={yScale} height={height} axisLable={"Death Rates"} />
+                        <XAxis xScale={xScale} height={height} width={width} />
+                    </g>
+                }
+              else if (forecast === "Cured Rates") {
+                    return <g transform={`translate(${offsetX}, ${offsetY})`}>
+                        <Bars forecast={forecast} data={data} xScale={xScale2} yScale={yScale2} height={height}
+                            selectedStation={selectedStation} setSelectedStation={setSelectedStation} />
+                        <YAxis yScale={yScale2} height={height} axisLable={"Cured Rates"} />
+                        <XAxis xScale={xScale2} height={height} width={width} />
+                    </g>
+                }
+                 else if (forecast === "Confirmed Rates") {
+                    return <g transform={`translate(${offsetX}, ${offsetY})`}>
+                        <Bars forecast={forecast} data={data} xScale={xScale3} yScale={yScale3} height={height}
+                            selectedStation={selectedStation} setSelectedStation={setSelectedStation} />
+                        <YAxis yScale={yScale3} height={height} axisLable={"Confirmed Rates"} />
+                        <XAxis xScale={xScale3} height={height} width={width} />
+                    </g>
+                }
+            
+            }
         function Tooltip(props) {
             const { d, left, top } = props;
             //console.log(d);
@@ -276,7 +368,7 @@
         }
         const Charts = () => {
             const [selectedStation, setSelectedStation] = React.useState(null);
-            const [month, setMonth] = React.useState('4');
+            const [forecast, setForecast] = React.useState(null);
             const [tooltipX, setTooltipX] = React.useState(null);
             const [tooltipY, setTooltipY] = React.useState(null);
             const deathData = deathDataFunc(deathUrl);
@@ -290,11 +382,23 @@
             const innerHeight = HEIGHT - margin.top - margin.bottom;
             const innerWidth = WIDTH - margin.left - margin.right;
             const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const data = dataAll.filter(d => {
-                return d.month === MONTH[month]
-            });
-            const selectedPoint = data.filter(d => d.Name === selectedStation)[0];
-       
+            // const data = dataAll.filter(d => {
+            //     return d.month === MONTH[month]
+            // });
+            const selectedPoint = deathData.filter(d => d.Name === selectedStation)[0];
+            
+            // const xScaleBar = d3.scaleBand()
+            //     .domain(deathData.map(d => d.Name))
+            //     .range([innerWidth, 0]);
+            // const yScaleBar = d3.scaleLinear()
+            //     .domain([0, d3.max(deathData, d => d.Death)])
+            //     .range([innerHeight / 2, 0])
+            //     .nice();
+            const changeHandler = (event) => {
+                setForecast(event.target.value);
+            };
+            console.log(forecast, 308);
+          
             const xScaleBar = d3.scaleBand()
                 .domain(deathData.map(d => d.Name))
                 .range([innerWidth, 0]);
@@ -302,19 +406,37 @@
                 .domain([0, d3.max(deathData, d => d.Death)])
                 .range([innerHeight / 2, 0])
                 .nice();
-            const changeHandler = (event) => {
-                setMonth(event.target.value);
-            };
+            const xScaleBar2 = d3.scaleBand()
+                .domain(deathData.map(d => d.Name))
+                .range([innerWidth, 0]);
+            const yScaleBar2 = d3.scaleLinear()
+                .domain([0, d3.max(deathData, d => d.Cured)])
+                .range([innerHeight / 2, 0])
+                .nice();
+            const xScaleBar3 = d3.scaleBand()
+                .domain(deathData.map(d => d.Name))
+                .range([innerWidth, 0]);
+            const yScaleBar3 = d3.scaleLinear()
+                .domain([0, d3.max(deathData, d => d.Total_Confirmed_cases)])
+                .range([innerHeight / 2, 0])
+                .nice();
             return (
                 <div>
                     <div>
-                        
+                        <div style={{ position: "absolute", textAlign: "left", width: "240px", left: "40px", top: "1730px" }}>
+                            <input type="button" onClick={() => changeHandler(event)} value="Confirmed Rates" />
+                        </div>
+                        <div style={{ position: "absolute", textAlign: "left", width: "240px", left: "40px", top: "1760px" }}>
+                            <input type="button" onClick={() => changeHandler(event)} value="Death Rates" />
+                        </div>
+                        <div style={{ position: "absolute", textAlign: "left", width: "240px", left: "40px", top: "1700px" }}>
+                            <input type="button" onClick={() => changeHandler(event)} value="Cured Rates" />
+                        </div>
                     </div>
                     <svg width={WIDTH} height={HEIGHT}>
-                          <BarChart offsetX={margin.left} offsetY={margin.top + margin.gap + innerHeight / 2} data={deathData} xScale={xScaleBar}
-                            yScale={yScaleBar} height={innerHeight / 2 }  width={innerWidth} selectedStation={selectedStation}
+                         <BarChart forecast={forecast} offsetX={margin.left} offsetY={margin.top + margin.gap + innerHeight / 2} data={deathData} xScale={xScaleBar}
+                            yScale={yScaleBar} xScale2={xScaleBar2} yScale2={yScaleBar2} xScale3={xScaleBar3} yScale3={yScaleBar3} height={innerHeight / 2} width={innerWidth} selectedStation={selectedStation}
                             setSelectedStation={setSelectedStation} />
-                            
                        
                     </svg>
                     <Tooltip d={selectedPoint} left={tooltipX} top={tooltipY} />
