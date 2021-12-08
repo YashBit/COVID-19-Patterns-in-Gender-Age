@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title style="font-size: 100px;">COVID 19 In India - Age and Gender Distributions</title>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="css/styles.css" rel="stylesheet" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://d3js.org/d3-path.v2.min.js"></script>
+    <script src="https://d3js.org/d3-shape.v2.min.js"></script>
+    <script src="https://d3js.org/topojson.v1.min.js"></script>
+    <script src="https://d3js.org/d3-array.v2.min.js"></script>
+    <script src="https://d3js.org/d3-geo.v2.min.js"></script>
+    <script src="https://d3js.org/d3-geo-projection.v3.min.js"></script>
+    <script src="https://unpkg.com/react/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone/babel.js"></script>
+
+    <div id="tooltip"></div><!-- div to hold tooltip. -->
+
+    <!-- creates india State. -->
+</head>
+
+<style>
+    .state {
+        fill: none;
+        stroke: #a9a9a9;
+        stroke-width: 1;
+    }
+
+    .state:hover {
+        fill-opacity: 0.5;
+    }
+
+    #tooltip {
+        position: absolute;
+        text-align: center;
+        padding: 20px;
+        margin: 10px;
+        font: 12px sans-serif;
+        background: lightsteelblue;
+        border: 1px;
+        border-radius: 2px;
+        pointer-events: none;
+    }
+
+    #tooltip h4 {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    #tooltip {
+        background: rgba(0, 0, 0, 0.9);
+        border: 1px solid grey;
+        border-radius: 5px;
+        font-size: 12px;
+        width: auto;
+        padding: 4px;
+        color: white;
+        opacity: 0;
+    }
+
+    #tooltip table {
+        table-layout: fixed;
+    }
+
+    #tooltip tr td {
+        padding: 0;
+        margin: 0;
+    }
+
+    #tooltip tr td:nth-child(1) {
+        width: 50px;
+    }
+
+    #tooltip tr td:nth-child(2) {
+        text-align: center;
+    }
+</style>
+
+<body>
+    <!-- Responsive navbar-->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#!">COVID 19 in India</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="#!">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="testLinked.html">Distribution Data</a></li>
+                    <li class="nav-item"><a class="nav-link" href="rawData.html">Raw Data</a></li>
+                    <li class="nav-item"><a class="nav-link" href="treeMap.html">TreeMap Visualization</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- Header - set the background image for the header in the line below-->
+    <header class="py-5 bg-image-full" style="background-image: url('assets/pic2.jpeg')">
+        <div class="text-center my-5">
+
+            <h1 style="font-size: 100px; color: black;">COVID 19 in India</h1>
+            <p style="font-size: 70px; color: white;">Age and Gender Distribtions</p>
+        </div>
+    </header>
+    <!-- Content section-->
+    <section class="py-5">
+        <div class="container my-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-6">
+                    <h2>Full Width Backgrounds</h2>
+                    <p class="lead">A single, lightweight helper class allows you to add engaging, full width background
+                        images to sections of your page.</p>
+                    <p class="mb-0">The universe is almost 14 billion years old, and, wow! Life had no problem starting
+                        here on Earth! I think it would be inexcusably egocentric of us to suggest that we're alone in
+                        the universe.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Image element - set the background image for the header in the line below-->
+    <div class="py-5 bg-image-full" style="background-image: url('assets/pic3.jpeg')">
+        <!-- Put anything you want here! The spacer below with inline CSS is just for demo purposes!-->
+        <div style="height: 20rem"></div>
+    </div>
+    <!-- Content section-->
+    
+
+    <div id="root"></div>
+   
+    <script type='text/babel'>
+        const margin = { top: 20, right: 20, bottom: 180, left: 40, gap: 50 };
+        const deathUrl = "data/deathFilter2.csv"
+        const csvUrl = 'https://gist.githubusercontent.com/hogwild/3b9aa737bde61dcb4dfa60cde8046e04/raw/citibike2020.csv'
+        function useData(csvPath) {
+            const [dataAll, setData] = React.useState(null);
+            React.useEffect(() => {
+                d3.csv(csvPath).then(data => {
+                    data.forEach(d => {
+                        d.start = +d.start;
+                        d.tripdurationS = +d.tripdurationS;
+                        d.end = +d.end;
+                        d.tripdurationE = +d.tripdurationE;
+                    });
+                    setData(data);
+                });
+            }, []);
+            return dataAll;
+        }
+        function deathDataFunc(csvPath) {
+                const [dataAll, setData] = React.useState(null);
+                React.useEffect(() => {
+                    d3.csv(csvPath).then(data => {
+                        data.forEach(d => {
+                            d.Death = +d.Death;
+                        });
+                        setData(data);
+                    });
+                }, []);
+                return dataAll;
+            }
+        function YAxis(props) {
+            const { yScale, height, axisLable } = props;
+            return <g>
+                {<line y2={height} stroke='black' />}
+                {yScale.ticks().map(tickValue =>
+                    <g key={tickValue} transform={`translate(-10, ${yScale(tickValue)})`}>
+                        <line x2={10} stroke='black' />
+                        <text style={{ textAnchor: 'end', fontSize: '10px' }} >
+                            {tickValue}
+                        </text>
+                    </g>
+                )}
+                <text style={{ textAnchor: 'end', fontSize: '15px' }} transform={`translate(20, 0)rotate(-90)`}>
+                    {axisLable}
+                </text>
+            </g>
+        }
+        function XAxis(props) {
+            const { xScale, height, width, axisLable } = props;
+            if (typeof (xScale.domain()[0]) === "number") {
+                return <g>
+                    {<line x1={0} y1={height} x2={width} y2={height} stroke='black' />}
+                    {xScale.ticks().map(tickValue =>
+                        <g key={tickValue} transform={`translate(${xScale(tickValue)}, ${height})`}>
+                            <line y2={10} stroke='black' />
+                            <text style={{ textAnchor: 'middle', fontSize: '10px' }} y={20}>
+                                {tickValue}
+                            </text>
+                        </g>
+                    )}
+                    <text style={{ textAnchor: 'end', fontSize: '15px' }} transform={`translate(${width}, ${height - 10})`}>
+                        {axisLable}
+                    </text>
+                </g>
+            }
+            if (typeof (xScale.domain()[0]) === "string") {
+                return <g>
+                    {<line x1={0} y1={height} x2={width} y2={height} stroke='black' />}
+                    {xScale.domain().map(tickValue =>
+                        <g key={tickValue + 'B'} transform={`translate(${xScale(tickValue)}, 0)`}>
+                            <line y2={height} />
+                            <text style={{ textAnchor: 'start', fontSize: '10px' }} y={height + 3} transform={`rotate(75, 0, ${height + 3})`}>
+                                {tickValue}
+                            </text>
+                        </g>
+                    )}
+                </g>
+            }
+        }
+      
+        function Bars(props) {
+            const { data, xScale, yScale, height, selectedStation, setSelectedStation } = props;
+            const getColor = (selectedStation, Name) => {
+                return selectedStation && Name === selectedStation ? "red" : "black";
+            }
+            return <g>
+                {data.map(d =>
+                    <rect key={d.Name} x={xScale(d.Name)} y={yScale(d.Death)}
+                        width={xScale.bandwidth()} height={height - yScale(d.Death)} stroke="white"
+                        fill={getColor(selectedStation, d.Name)} onMouseEnter={() => setSelectedStation(d.Name)}
+                        onMouseOut={() => setSelectedStation(null)} />
+                )}
+            </g>
+        }
+        function BarChart(props) {
+            const { offsetX, offsetY, data, xScale, yScale, height, width, selectedStation, setSelectedStation } = props;
+            return <g transform={`translate(${offsetX}, ${offsetY})`}>
+                <Bars data={data} xScale={xScale} yScale={yScale} height={height}
+                    selectedStation={selectedStation} setSelectedStation={setSelectedStation} />
+                <YAxis yScale={yScale} height={height} axisLable={"Death Rates"} />
+                <XAxis xScale={xScale} height={height} width={width} />
+            </g>
+        }
+        function Tooltip(props) {
+            const { d, left, top } = props;
+            //console.log(d);
+            if (left === null) {
+                return <div></div>;
+            } else {
+                const divStyle = {
+                    position: "absolute",
+                    textAlign: "left",
+                    width: "150px",
+                    height: "120px",
+                    padding: "2px",
+                    font: "12px sans-serif",
+                    background: "lightgreen",
+                    border: "0px",
+                    borderRadius: "8px",
+                    pointerEvents: "none",
+                    left: `${left + 10}px`,
+                    top: `${top}px`
+                };
+                return <div style={divStyle} >
+                    <p>{d.station}</p>
+                    <p>Trip durations:</p>
+                    <ul>
+                        <li>Name of State: {d.Name}</li>
+                        <li>Number of Deaths: {d.Death}</li>
+                    </ul>
+                </div>
+            };
+        }
+        const Charts = () => {
+            const [selectedStation, setSelectedStation] = React.useState(null);
+            const [month, setMonth] = React.useState('4');
+            const [tooltipX, setTooltipX] = React.useState(null);
+            const [tooltipY, setTooltipY] = React.useState(null);
+            const deathData = deathDataFunc(deathUrl);
+            const dataAll = useData(csvUrl);
+            console.log(deathData, 297);
+            if (!dataAll) {
+                return <pre>Loading...</pre>;
+            };
+            const WIDTH = 600;
+            const HEIGHT = 800;
+            const innerHeight = HEIGHT - margin.top - margin.bottom;
+            const innerWidth = WIDTH - margin.left - margin.right;
+            const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const data = dataAll.filter(d => {
+                return d.month === MONTH[month]
+            });
+            const selectedPoint = data.filter(d => d.Name === selectedStation)[0];
+       
+            const xScaleBar = d3.scaleBand()
+                .domain(deathData.map(d => d.Name))
+                .range([innerWidth, 0]);
+            const yScaleBar = d3.scaleLinear()
+                .domain([0, d3.max(deathData, d => d.Death)])
+                .range([innerHeight / 2, 0])
+                .nice();
+            const changeHandler = (event) => {
+                setMonth(event.target.value);
+            };
+            return (
+                <div>
+                    <div>
+                        
+                    </div>
+                    <svg width={WIDTH} height={HEIGHT}>
+                          <BarChart offsetX={margin.left} offsetY={margin.top + margin.gap + innerHeight / 2} data={deathData} xScale={xScaleBar}
+                            yScale={yScaleBar} height={innerHeight / 2 }  width={innerWidth} selectedStation={selectedStation}
+                            setSelectedStation={setSelectedStation} />
+                            
+                       
+                    </svg>
+                    <Tooltip d={selectedPoint} left={tooltipX} top={tooltipY} />
+
+                </div>
+            )
+        }
+        const rootElement = document.getElementById('root');
+        ReactDOM.render(<Charts />, rootElement);
+    </script>
+
+
+
+
+    <!-- Footer-->
+    <footer class="py-5 bg-dark">
+        <div class="container">
+            <p class="m-0 text-center text-white">Copyright &copy; YashBit</p>
+        </div>
+    </footer>
+    <!-- Bootstrap core JS-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Core theme JS-->
+    <script src="js/scripts.js"></script>
+</body>
+
+</html>
